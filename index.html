@@ -16,14 +16,24 @@
       <button onclick="startGame('medium')">متوسط (5 كؤوس)</button>
       <button onclick="startGame('hard')">صعب (7 كؤوس)</button>
     </div>
+
+    <div id="algorithm-selection" class="hidden">
+      <h2>اختر خوارزمية الفرز:</h2>
+      <button onclick="selectSortAlgorithm('bubbleSort')">Bubble Sort</button>
+      <button onclick="selectSortAlgorithm('insertionSort')">Insertion Sort</button>
+      <button onclick="selectSortAlgorithm('quickSort')">Quick Sort</button>
+    </div>
+
     <div id="game-board" class="hidden">
       <h2 id="instruction">تذكر أماكن الكؤوس!</h2>
       <div id="cups-container"></div>
       <button id="start-mixing" onclick="startMixing()" class="hidden">ابدأ الخلط</button>
     </div>
+
     <div id="message" class="hidden"></div>
   </div>
   <script src="game.js"></script>
 </body>
 </html>
+
 
