@@ -61,12 +61,13 @@ button:hover {
   display: flex;
   justify-content: center;
   margin: 20px 0;
+  flex-wrap: wrap; /* Allow cups to wrap in case of smaller screens */
 }
 
 .cup {
-  width: 60px;
-  height: 100px;
-  margin: 0 5px;
+  width: 40px; /* تقليص العرض ليكون أنحف */
+  height: 80px; /* تقليص الارتفاع أيضًا */
+  margin: 10px;
   border-radius: 0 0 50% 50%;
   transition: transform 0.5s ease, background-color 0.3s ease;
   border: 2px solid #fff;
@@ -76,6 +77,12 @@ button:hover {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  cursor: grab;
+}
+
+/* Add a slight scaling effect on hover */
+.cup:hover {
+  transform: scale(1.1);
 }
 
 .cup::after {
@@ -100,17 +107,33 @@ button:hover {
   display: none;
 }
 
+/* Media Query for mobile devices */
 @media screen and (max-width: 600px) {
   .cup {
-      width: 50px;
-      height: 80px;
+    width: 50px; /* تقليص العرض على الهواتف */
+    height: 90px; /* تعديل الارتفاع قليلًا */
+    margin: 15px;
   }
 
   button {
-      font-size: 14px;
+    font-size: 14px;
   }
 
   h1 {
-      font-size: 28px;
+    font-size: 28px;
+  }
+
+  #cups-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .cup {
+    width: 60px; /* تقليص العرض على الهواتف */
+    height: 90px; /* تعديل الارتفاع */
+    margin: 15px;
   }
 }
+
