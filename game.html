@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لعبة ترتيب الكؤوس</title>
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <div class="game-container">
+    <h1>Memory Challenge</h1>
+
+    <div id="level-selection">
+      <h2>اختر المستوى:</h2>
+      <button onclick="startGame('easy')">بسيط (3 كؤوس)</button>
+      <button onclick="startGame('medium')">متوسط (5 كؤوس)</button>
+      <button onclick="startGame('hard')">صعب (7 كؤوس)</button>
+    </div>
+    <div id="game-board" class="hidden">
+      <h2 id="instruction">تذكر أماكن الكؤوس!</h2>
+      <div id="cups-container"></div>
+      <button id="start-mixing" onclick="startMixing()" class="hidden">ابدأ الخلط</button>
+    </div>
+    <div id="message" class="hidden"></div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
+
