@@ -4,7 +4,16 @@ let levels = {
   hard: 7
 };
 
-let colors = ["red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan", "lime", "brown"];
+let colors = [
+  "#FF5733",  // Red-Orange
+  "#DAF7A6",  // Light Green
+  "#900C3F",  // Dark Red
+  "#C70039",  // Strong Red
+  "#FFFCF9",  // Off White
+  "#581845",  // Purple
+  "#1D3557"   // Dark Blue
+];
+
 let selectedLevel = null;
 let originalOrder = [];
 let shuffledOrder = [];
@@ -26,6 +35,7 @@ function startGame(level) {
   // إظهار اللعبة فقط
   document.getElementById("game-board").classList.remove("hidden");
 }
+
 function setAlgorithm(algorithm) {
   selectedAlgorithm = algorithm; // تخزين الخوارزمية المختارة
   document.getElementById("algorithm-selection").classList.add("hidden"); // إخفاء قسم اختيار الخوارزمية
@@ -38,6 +48,7 @@ function setAlgorithm(algorithm) {
     startMixing();
   }, 3000);
 }
+
 function generateCups(count) {
   const container = document.getElementById("cups-container");
   container.innerHTML = "";
@@ -64,45 +75,42 @@ function generateCups(count) {
   });
 }
 
-
-
-
 function startMixing() {
   const cups = Array.from(document.querySelectorAll(".cup"));
   let cupColors = cups.map(cup => cup.dataset.color);
 
-  let sortedColors;
-  switch (selectedAlgorithm) {
-    case "bubbleSort":
-      sortedColors = bubbleSort([...cupColors]); // نسخ الألوان الأصلية
-      break;
-    case "insertionSort":
-      sortedColors = insertionSort([...cupColors]);
-      break;
-    case "quickSort":
-      sortedColors = quickSort([...cupColors]);
-      break;
-    default:
-      sortedColors = [...cupColors];
-  }
-
+  // خلط الألوان عشوائيًا بعد مرور 3 ثوانٍ
+  shuffledOrder = [...cupColors].sort(() => Math.random() - 0.5);
   let i = 0;
   const mixingInterval = setInterval(() => {
-    if (i < sortedColors.length - 1) {
-      // تبديل الكؤوس بين المواقع
-      swapColors(cups, i, i + 1); // تبادل لونين
+    if (i < shuffledOrder.length) {
+      swapColors(cups, i, (i + 1) % shuffledOrder.length); // تبديل المواقع بين الكؤوس
       i++;
     } else {
-      clearInterval(mixingInterval);
-
-      // تحديث ترتيب الألوان بعد الخلط
-      shuffledOrder = cups.map(cup => cup.dataset.color);
-
-      enableUserInput();
+      clearInterval(mixingInterval);  // إيقاف التكرار عند الانتهاء من الخلط
+      shuffledOrder = cups.map(cup => cup.dataset.color);  // حفظ الترتيب الجديد
+      enableUserInput();  // تفعيل الإدخال للمستخدم بعد الخلط
       document.getElementById("instruction").textContent = "قم بترتيب الكؤوس!";
     }
-  }, 500);
+  }, 300); // زيادة السرعة هنا لجعل العملية أكثر سلاسة
 }
+
+function swapColors(cups, index1, index2) {
+  const tempColor = cups[index1].dataset.color;
+
+  // تبادل الألوان بين الكؤوس
+  cups[index1].dataset.color = cups[index2].dataset.color;
+  cups[index2].dataset.color = tempColor;
+
+  // تحديث المظهر الخارجي
+  cups[index1].style.backgroundColor = cups[index1].dataset.color;
+  cups[index2].style.backgroundColor = cups[index2].dataset.color;
+
+  // لتحريك الكؤوس بشكل مرن أثناء الخلط
+  cups[index1].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
+  cups[index2].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
+}
+
 
 function displayShuffledCups(cups, shuffledColors) {
   cups.forEach((cup, index) => {
@@ -110,48 +118,8 @@ function displayShuffledCups(cups, shuffledColors) {
     cup.style.backgroundColor = shuffledColors[index];
     cup.dataset.color = shuffledColors[index]; // تأكد من أن البيانات محدثة
   });
-
-  // طباعة المعلومات للتحقق
   console.log("Current Colors After Shuffle:", shuffledColors);
 }
-
-
-
-function bubbleSort(array) {
-  let arr = [...array]; // نسخ المصفوفة
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = 0; j < arr.length - i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-      }
-    }
-  }
-  return arr;
-}
-
-
-function insertionSort(array) {
-  let arr = [...array];
-  for (let i = 1; i < arr.length; i++) {
-    let key = arr[i];
-    let j = i - 1;
-    while (j >= 0 && arr[j] > key) {
-      arr[j + 1] = arr[j];
-      j--;
-    }
-    arr[j + 1] = key;
-  }
-  return arr;
-}
-
-function quickSort(array) {
-  if (array.length <= 1) return array;
-  const pivot = array[array.length - 1];
-  const left = array.filter(el => el < pivot);
-  const right = array.filter(el => el > pivot);
-  return [...quickSort(left), pivot, ...quickSort(right)];
-}
-
 
 function enableUserInput() {
   const cups = Array.from(document.querySelectorAll(".cup"));
@@ -222,19 +190,6 @@ function handleTouchEnd(e) {
   draggedCup.style.transform = "none";
 }
 
-
-function swapColors(cups, index1, index2) {
-  const tempColor = cups[index1].dataset.color;
-
-  // تبادل الألوان
-  cups[index1].dataset.color = cups[index2].dataset.color;
-  cups[index2].dataset.color = tempColor;
-
-  // تحديث المظهر الخارجي
-  cups[index1].style.backgroundColor = cups[index1].dataset.color;
-  cups[index2].style.backgroundColor = cups[index2].dataset.color;
-}
-
 function swapCups(targetCup) {
   if (targetCup && targetCup.classList.contains("cup")) {
     const draggedColor = draggedCup.dataset.color;
@@ -249,7 +204,6 @@ function swapCups(targetCup) {
     targetCup.style.backgroundColor = draggedColor;
   }
 }
-
 
 function checkUserOrder() {
   const cups = Array.from(document.querySelectorAll(".cup"));
@@ -278,6 +232,7 @@ function checkUserOrder() {
     startNewRound();
   }
 }
+
 function startNewRound() {
   document.getElementById("instruction").textContent = "تذكر أماكن الكؤوس!";
   generateCups(levels[selectedLevel]); // إعادة إنشاء الأكواب بألوان عشوائية
@@ -287,15 +242,12 @@ function startNewRound() {
   }, 6000);
 }
 
-
-
-
-
 function resetGame() {
   document.getElementById("game-board").classList.add("hidden");
   document.getElementById("level-selection").classList.remove("hidden");
   document.getElementById("algorithm-selection").classList.add("hidden");
 }
+
   
 
 
