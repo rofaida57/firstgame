@@ -1,7 +1,7 @@
 body {
   font-family: Arial, sans-serif;
   direction: rtl;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background: linear-gradient(135deg, #680a9e, #ff00ff, #c0a4c4);
   margin: 0;
   padding: 0;
   display: flex;
@@ -13,7 +13,7 @@ body {
 
 .game-container {
   text-align: center;
-  background: rgba(25, 25, 112, 0.9);
+  background: rgba(22, 22, 136, 0.9);
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 0 25px rgba(0, 0, 255, 0.7);
@@ -23,7 +23,7 @@ body {
 
 h1 {
   font-size: 42px;
-  color: #ff00ff; /* لون بنفسجي فاتح نيون */
+  color: #ffecfff8; /* لون بنفسجي فاتح نيون */
   text-shadow: 0 0 15px #ff00ff, 0 0 30px #ff00ff, 0 0 45px #ff00ff;
   margin-bottom: 20px;
   font-weight: bold;
@@ -34,18 +34,18 @@ button {
   padding: 12px 25px;
   font-size: 18px;
   cursor: pointer;
-  background: linear-gradient(45deg, #00ffcc, #ff0066);
+  background: linear-gradient(45deg, #0066ff, #c359d8);
   color: #fff;
   border: none;
   border-radius: 10px;
-  box-shadow: 0 0 20px rgba(255, 0, 102, 0.7);
+  box-shadow: 0 0 20px rgba(38, 0, 255, 0.7);
   transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 button:hover {
-  background: linear-gradient(45deg, #ff0066, #00ffcc);
+  background: linear-gradient(45deg, #c359d8, #0066ff);
   transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(0, 255, 204, 0.8);
+  box-shadow: 0 0 25px #ffffff ;
 }
 
 #cups-container {
@@ -54,28 +54,49 @@ button:hover {
   margin: 30px 0;
   flex-wrap: wrap;
 }
-
 .cup {
-  width: 70px;
-  height: 110px;
-  margin: 10px;
-  border-radius: 15%;
-  transition: transform 0.5s ease, border-color 0.3s ease;
-  border: 3px solid #00ffff;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 50px; /* عرض الكأس */
+  height: 70px; /* ارتفاع الكأس */
+  margin: 5px;
   position: relative;
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0); /* جعل الداخل شفافًا */
+  border: 2px solid #aaaaaa;
+  border-radius: 0 0 25px 25px; /* مستدير فقط في الأسفل */
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.2), 
+    inset 0 -5px 8px rgba(0, 0, 0, 0.1); /* لمعان داخلي */
+  overflow: hidden; /* لضمان عدم تجاوز المحتوى */
 }
 
-.cup:hover {
-  transform: scale(1.1);
-  border-color: #ff00ff;
-  box-shadow: 0 0 25px rgba(255, 0, 255, 0.8);
+
+.cup:before {
+  content: "";
+  position: absolute;
+  top: -10px; /* مكان الحافة */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px; /* عرض الحافة */
+  height: 15px; /* ارتفاع الحافة */
+  background: linear-gradient(145deg, #dbdbdb, #fffcfc); /* تدرج لوني للحافة */
+  border: 2px solid #c7c6c6; /* حافة واضحة */
+  border-radius: 50%; /* دائري */
+  box-shadow: inset 0 -2px 4px rgba(148, 143, 143, 0.2); /* ظل داخلي */
+  z-index: 10; /* فوق الكأس */
 }
+
+.cup:after {
+  content: "";
+  position: absolute;
+  bottom: -10px; /* قاعدة الكأس */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px; /* عرض القاعدة */
+  height: 10px; /* ارتفاع القاعدة */
+  background: linear-gradient(145deg, #cacaca, #d4d4d4); /* تدرج لوني للقاعدة */
+  border-radius: 5px; /* مستدير قليلاً */
+  box-shadow: inset 0 -2px 4px rgba(139, 139, 139, 0.2);
+}
+  
 
 .map {
   display: none;

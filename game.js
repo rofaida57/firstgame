@@ -6,11 +6,11 @@ let levels = {
 
 let colors = [
   "#FF5733",  // Red-Orange
-  "#DAF7A6",  // Light Green
-  "#900C3F",  // Dark Red
+  "#00ffcc",  // Light Green
+  "#ff00ff",  // Dark Red
   "#C70039",  // Strong Red
   "#FFFCF9",  // Off White
-  "#581845",  // Purple
+  "#0066ff",  // Purple
   "#1D3557"   // Dark Blue
 ];
 
@@ -24,30 +24,27 @@ let draggedCup = null; // للكأس المسحوب
 function startGame(level) {
   selectedLevel = level;
 
-  // إخفاء أقسام الاختيار
+  // إخفاء قسم اختيار المستوى
   document.getElementById("level-selection").classList.add("hidden");
-  document.getElementById("algorithm-selection").classList.remove("hidden");
 
   // إعادة تعيين العدادات
   winCount = 0;
   currentRound = 1;
 
-  // إظهار اللعبة فقط
+  // إظهار لوحة اللعبة
   document.getElementById("game-board").classList.remove("hidden");
-}
 
-function setAlgorithm(algorithm) {
-  selectedAlgorithm = algorithm; // تخزين الخوارزمية المختارة
-  document.getElementById("algorithm-selection").classList.add("hidden"); // إخفاء قسم اختيار الخوارزمية
-  generateCups(levels[selectedLevel]); // توليد الأكواب بناءً على المستوى المختار
+  // مباشرة توليد الأكواب دون الحاجة لاختيار الخوارزمية
+  generateCups(levels[selectedLevel]); 
 
-  // عرض رسالة التعليمات
+  // عرض التعليمات وتمديد مدة تذكر الأكواب
   document.getElementById("instruction").textContent = "تذكر أماكن الكؤوس!";
   setTimeout(() => {
     document.getElementById("instruction").textContent = "الكؤوس تختلط!";
     startMixing();
-  }, 3000);
+  }, 5000); // تمديد الوقت إلى 5 ثوانٍ
 }
+
 
 function generateCups(count) {
   const container = document.getElementById("cups-container");
@@ -77,39 +74,54 @@ function generateCups(count) {
 
 function startMixing() {
   const cups = Array.from(document.querySelectorAll(".cup"));
-  let cupColors = cups.map(cup => cup.dataset.color);
 
-  // خلط الألوان عشوائيًا بعد مرور 3 ثوانٍ
-  shuffledOrder = [...cupColors].sort(() => Math.random() - 0.5);
+  // خوارزمية Fisher-Yates Shuffle لخلط الألوان
+  let shuffledColors = [...originalOrder];
+  for (let i = shuffledColors.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledColors[i], shuffledColors[j]] = [shuffledColors[j], shuffledColors[i]];
+  }
+
   let i = 0;
   const mixingInterval = setInterval(() => {
-    if (i < shuffledOrder.length) {
-      swapColors(cups, i, (i + 1) % shuffledOrder.length); // تبديل المواقع بين الكؤوس
+    if (i < cups.length) {
+      // تبديل الألوان بين الكؤوس بشكل متكرر
+      const randomIndex = Math.floor(Math.random() * cups.length);
+      swapColors(cups, i, randomIndex);
       i++;
     } else {
-      clearInterval(mixingInterval);  // إيقاف التكرار عند الانتهاء من الخلط
-      shuffledOrder = cups.map(cup => cup.dataset.color);  // حفظ الترتيب الجديد
-      enableUserInput();  // تفعيل الإدخال للمستخدم بعد الخلط
+      clearInterval(mixingInterval); // إيقاف الخلط
+
+      // تطبيق الألوان العشوائية الجديدة
+      cups.forEach((cup, index) => {
+        cup.style.backgroundColor = shuffledColors[index];
+        cup.dataset.color = shuffledColors[index];
+        cup.style.transform = "none"; // إعادة ضبط التحولات
+      });
+
+      enableUserInput(); // تفعيل الإدخال للمستخدم
       document.getElementById("instruction").textContent = "قم بترتيب الكؤوس!";
     }
-  }, 300); // زيادة السرعة هنا لجعل العملية أكثر سلاسة
+  }, 300); // تأخير لكل تبديل لزيادة التأثير
 }
 
 function swapColors(cups, index1, index2) {
-  const tempColor = cups[index1].dataset.color;
+  if (index1 !== index2) {
+    // تبديل الألوان بين الكأسين
+    const tempColor = cups[index1].dataset.color;
+    cups[index1].dataset.color = cups[index2].dataset.color;
+    cups[index2].dataset.color = tempColor;
 
-  // تبادل الألوان بين الكؤوس
-  cups[index1].dataset.color = cups[index2].dataset.color;
-  cups[index2].dataset.color = tempColor;
+    // تحديث المظهر الخارجي
+    cups[index1].style.backgroundColor = cups[index1].dataset.color;
+    cups[index2].style.backgroundColor = cups[index2].dataset.color;
 
-  // تحديث المظهر الخارجي
-  cups[index1].style.backgroundColor = cups[index1].dataset.color;
-  cups[index2].style.backgroundColor = cups[index2].dataset.color;
-
-  // لتحريك الكؤوس بشكل مرن أثناء الخلط
-  cups[index1].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
-  cups[index2].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
+    // إضافة حركة عشوائية صغيرة لجعل التبديل مرئيًا
+    cups[index1].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
+    cups[index2].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
+  }
 }
+
 
 
 function displayShuffledCups(cups, shuffledColors) {
