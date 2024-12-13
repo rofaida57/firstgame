@@ -65,7 +65,8 @@ button:hover {
   box-shadow: 
     0 4px 8px rgba(0, 0, 0, 0.2), 
     inset 0 -5px 8px rgba(0, 0, 0, 0.1); /* لمعان داخلي */
-  overflow: hidden; /* لضمان عدم تجاوز المحتوى */
+  overflow: hidden; /* لضمان عدم تجاوز المحتوى */ 
+  transition: transform 0.2s ease;
 }
 
 
@@ -110,6 +111,9 @@ button:hover {
   text-shadow: 0 0 15px #00ffcc;
 }
 
+.cup.dragging {
+  z-index: 10; /* لجعل الكأس المسحوب فوق البقية */
+}
 .hidden {
   display: none;
 }

@@ -180,15 +180,19 @@ function handleTouchStart(e) {
   touchStartX = touch.clientX;
   touchStartY = touch.clientY;
   draggedCup = e.target;
+  draggedCup.classList.add("dragging");
 }
 
 function handleTouchMove(e) {
   const touch = e.touches[0];
   const offsetX = touch.clientX - touchStartX;
   const offsetY = touch.clientY - touchStartY;
-  
-  draggedCup.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+
+  draggedCup.style.position = "absolute";
+  draggedCup.style.left = `${touch.clientX}px`;
+  draggedCup.style.top = `${touch.clientY}px`;
 }
+
 
 function handleTouchEnd(e) {
   const touch = e.changedTouches[0];
@@ -196,11 +200,21 @@ function handleTouchEnd(e) {
 
   if (targetCup && targetCup.classList.contains("cup")) {
     swapCups(targetCup);
+  } else {
+    console.warn("لم يتم العثور على كأس في هذه النقطة.");
   }
 
-  // إعادة موقع الكأس إلى الوضع الطبيعي بعد السحب
-  draggedCup.style.transform = "none";
+  // إعادة الكأس إلى موقعه الافتراضي
+  if (draggedCup) {
+    draggedCup.style.transform = "none";
+  }
 }
+function handleTouchEnd(e) {
+  if (draggedCup) {
+    draggedCup.classList.remove("dragging");
+  }
+}
+
 
 function swapCups(targetCup) {
   if (targetCup && targetCup.classList.contains("cup")) {
