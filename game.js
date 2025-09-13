@@ -1,297 +1,329 @@
-let levels = {
-  easy: 3,
-  medium: 5,
-  hard: 7
+document.addEventListener('DOMContentLoaded', () => {
+    // ربط الأحداث
+    document.getElementById('check-order-btn').addEventListener('click', checkUserOrder);
+    document.getElementById('modal-primary-btn').addEventListener('click', handleModalAction);
+    document.getElementById('modal-secondary-btn').addEventListener('click', () => {
+        hideModal();
+        startNewRound();
+    });
+});
+
+// --- إعدادات اللعبة ---
+const gameConfig = {
+    levels: {
+        easy: { cups: 3, memorizeTime: 4000, name: 'سهل' },
+        medium: { cups: 5, memorizeTime: 6000, name: 'متوسط' },
+        hard: { cups: 7, memorizeTime: 8000, name: 'صعب' }
+    },
+    colors: [
+        "#FF5252", "#FF4081", "#E040FB", "#7C4DFF", "#536DFE",
+        "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"
+    ],
+    state: {
+        currentLevel: null,
+        originalOrder: [],
+        score: 0,
+        roundsWon: 0,
+        isInteractable: false
+    }
 };
 
-let colors = [
-  "#FF5733",  // Red-Orange
-  "#00ffcc",  // Light Green
-  "#ff00ff",  // Dark Red
-  "#C70039",  // Strong Red
-  "#FFFCF9",  // Off White
-  "#0066ff",  // Purple
-  "#1D3557"   // Dark Blue
-];
+// --- دوال التحكم الرئيسية ---
+function startGame(levelKey) {
+    const level = gameConfig.levels[levelKey];
+    gameConfig.state.currentLevel = levelKey;
+    gameConfig.state.score = 0;
+    gameConfig.state.roundsWon = 0;
 
-let selectedLevel = null;
-let originalOrder = [];
-let shuffledOrder = [];
-let winCount = 0;
-let currentRound = 1;
-let draggedCup = null; // للكأس المسحوب
+    updateUI();
+    switchScreen('game-play');
+    updateInstruction(`تذكر ترتيب الأكواب في المستوى ${level.name}!`);
+    
+    generateCups(level.cups);
 
-function startGame(level) {
-  selectedLevel = level;
-
-  // إخفاء قسم اختيار المستوى
-  document.getElementById("level-selection").classList.add("hidden");
-
-  // إعادة تعيين العدادات
-  winCount = 0;
-  currentRound = 1;
-
-  // إظهار لوحة اللعبة
-  document.getElementById("game-board").classList.remove("hidden");
-
-  // مباشرة توليد الأكواب دون الحاجة لاختيار الخوارزمية
-  generateCups(levels[selectedLevel]); 
-
-  // عرض التعليمات وتمديد مدة تذكر الأكواب
-  document.getElementById("instruction").textContent = "تذكر أماكن الكؤوس!";
-  setTimeout(() => {
-    document.getElementById("instruction").textContent = "الكؤوس تختلط!";
-    startMixing();
-  }, 5000); // تمديد الوقت إلى 5 ثوانٍ
+    setTimeout(() => {
+        updateInstruction("انتبه! الأكواب تختلط الآن...");
+        animateMixing();
+    }, level.memorizeTime);
 }
-
 
 function generateCups(count) {
-  const container = document.getElementById("cups-container");
-  container.innerHTML = "";
-  originalOrder = [];
+    const container = document.getElementById("cups-container");
+    container.innerHTML = '';
+    gameConfig.state.originalOrder = [];
 
-  // تحقق من أن عدد الأكواب لا يتجاوز عدد الألوان المتاحة
-  if (count > colors.length) {
-    console.error("عدد الأكواب المطلوب أكبر من عدد الألوان المتاحة!");
-    return;
-  }
+    const shuffledColors = [...gameConfig.colors].sort(() => Math.random() - 0.5);
+    const selectedColors = shuffledColors.slice(0, count);
 
-  // خلط قائمة الألوان واختيار ألوان فريدة
-  let shuffledColors = [...colors].sort(() => Math.random() - 0.5);
-  let selectedColors = shuffledColors.slice(0, count);
+    selectedColors.forEach(color => {
+        const cupElement = document.createElement("div");
+        cupElement.className = "cup";
+        cupElement.dataset.color = color;
+        cupElement.draggable = true;
+        cupElement.style.color = color; // لاستخدامه في التوهج
 
-  // إنشاء الأكواب بألوان فريدة
-  selectedColors.forEach(color => {
-    let cup = document.createElement("div");
-    cup.classList.add("cup");
-    cup.style.backgroundColor = color;
-    cup.dataset.color = color; // حفظ اللون في الخاصية data-color
-    originalOrder.push(color);
-    container.appendChild(cup);
-  });
+        const cupTop = document.createElement('div'); cupTop.className = 'cup-top';
+        const cupBody = document.createElement('div'); cupBody.className = 'cup-body'; cupBody.style.backgroundColor = color;
+        const cupBase = document.createElement('div'); cupBase.className = 'cup-base';
+
+        cupElement.appendChild(cupTop);
+        cupElement.appendChild(cupBody);
+        cupElement.appendChild(cupBase);
+
+        gameConfig.state.originalOrder.push(color);
+        container.appendChild(cupElement);
+    });
 }
 
-function startMixing() {
-  const cups = Array.from(document.querySelectorAll(".cup"));
+function animateMixing() {
+    const cups = Array.from(document.querySelectorAll(".cup"));
+    const container = document.getElementById("cups-container");
+    container.classList.add('animate-mix'); // يمكن إضافة كلاس للتحكم في الحركة
+    
+    let mixCount = 0;
+    const totalMixes = 20;
 
-  // خوارزمية Fisher-Yates Shuffle لخلط الألوان
-  let shuffledColors = [...originalOrder];
-  for (let i = shuffledColors.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledColors[i], shuffledColors[j]] = [shuffledColors[j], shuffledColors[i]];
-  }
-
-  let i = 0;
-  const mixingInterval = setInterval(() => {
-    if (i < cups.length) {
-      // تبديل الألوان بين الكؤوس بشكل متكرر
-      const randomIndex = Math.floor(Math.random() * cups.length);
-      swapColors(cups, i, randomIndex);
-      i++;
-    } else {
-      clearInterval(mixingInterval); // إيقاف الخلط
-
-      // تطبيق الألوان العشوائية الجديدة
-      cups.forEach((cup, index) => {
-        cup.style.backgroundColor = shuffledColors[index];
-        cup.dataset.color = shuffledColors[index];
-        cup.style.transform = "none"; // إعادة ضبط التحولات
-      });
-
-      enableUserInput(); // تفعيل الإدخال للمستخدم
-      document.getElementById("instruction").textContent = "قم بترتيب الكؤوس!";
-    }
-  }, 300); // تأخير لكل تبديل لزيادة التأثير
+    const mixInterval = setInterval(() => {
+        if (mixCount < totalMixes) {
+            const i1 = Math.floor(Math.random() * cups.length);
+            let i2 = Math.floor(Math.random() * cups.length);
+            while(i2 === i1) i2 = Math.floor(Math.random() * cups.length);
+            
+            swapCups(cups[i1], cups[i2]);
+            mixCount++;
+        } else {
+            clearInterval(mixInterval);
+            container.classList.remove('animate-mix');
+            enableUserInteraction();
+            updateInstruction("أعد ترتيب الأكواب كما كانت!");
+            document.getElementById('check-order-btn').classList.remove('hidden');
+        }
+    }, 150);
 }
 
-function swapColors(cups, index1, index2) {
-  if (index1 !== index2) {
-    // تبديل الألوان بين الكأسين
-    const tempColor = cups[index1].dataset.color;
-    cups[index1].dataset.color = cups[index2].dataset.color;
-    cups[index2].dataset.color = tempColor;
+function enableUserInteraction() {
+    gameConfig.state.isInteractable = true;
+    const cups = document.querySelectorAll(".cup");
+    cups.forEach(cup => {
+        // إضافة مستمعي الأحداث
+        cup.addEventListener('dragstart', handleDragStart);
+        cup.addEventListener('dragover', handleDragOver);
+        cup.addEventListener('drop', handleDrop);
+        cup.addEventListener('dragend', handleDragEnd);
 
-    // تحديث المظهر الخارجي
-    cups[index1].style.backgroundColor = cups[index1].dataset.color;
-    cups[index2].style.backgroundColor = cups[index2].dataset.color;
-
-    // إضافة حركة عشوائية صغيرة لجعل التبديل مرئيًا
-    cups[index1].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
-    cups[index2].style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
-  }
+        cup.addEventListener('touchstart', handleTouchStart, { passive: false });
+        cup.addEventListener('touchmove', handleTouchMove, { passive: false });
+        cup.addEventListener('touchend', handleTouchEnd);
+    });
 }
 
-
-
-function displayShuffledCups(cups, shuffledColors) {
-  cups.forEach((cup, index) => {
-    // تحديث اللون الخارجي فقط
-    cup.style.backgroundColor = shuffledColors[index];
-    cup.dataset.color = shuffledColors[index]; // تأكد من أن البيانات محدثة
-  });
-  console.log("Current Colors After Shuffle:", shuffledColors);
+function disableUserInteraction() {
+    gameConfig.state.isInteractable = false;
+    document.getElementById('check-order-btn').classList.add('hidden');
 }
 
-function enableUserInput() {
-  const cups = Array.from(document.querySelectorAll(".cup"));
-  const container = document.getElementById("cups-container");
-
-  cups.forEach(cup => {
-    cup.draggable = true;
-
-    // أحداث السحب والإفلات للماوس
-    cup.addEventListener("dragstart", handleDragStart);
-    cup.addEventListener("dragover", handleDragOver);
-    cup.addEventListener("drop", handleDrop);
-
-    // أحداث السحب والإفلات للمس
-    cup.addEventListener("touchstart", handleTouchStart);
-    cup.addEventListener("touchmove", handleTouchMove);
-    cup.addEventListener("touchend", handleTouchEnd);
-  });
-
-  // زر التحقق
-  const button = document.createElement("button");
-  button.textContent = "تحقق من الترتيب";
-  button.onclick = checkUserOrder;
-  container.appendChild(button);
-}
+// --- معالجات أحداث السحب واللمس ---
+let draggedCup = null;
 
 function handleDragStart(e) {
-  draggedCup = e.target;
+    if (!gameConfig.state.isInteractable) return;
+    draggedCup = e.target.closest('.cup');
+    e.dataTransfer.effectAllowed = 'move';
+    draggedCup.classList.add('dragging');
 }
 
 function handleDragOver(e) {
-  e.preventDefault();
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
 }
 
 function handleDrop(e) {
-  e.preventDefault();
-  swapCups(e.target);
+    if (e.stopPropagation) e.stopPropagation();
+    e.preventDefault();
+    const targetCup = e.target.closest('.cup');
+    if (draggedCup && targetCup && draggedCup !== targetCup) {
+        swapCups(draggedCup, targetCup);
+    }
+    return false;
 }
 
-// للمس
-let touchStartX = 0;
-let touchStartY = 0;
+function handleDragEnd(e) {
+    if(draggedCup) {
+        draggedCup.classList.remove('dragging');
+    }
+    draggedCup = null;
+}
+
+let touchItem = null;
 
 function handleTouchStart(e) {
-  const touch = e.touches[0];
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
-  draggedCup = e.target;
-  draggedCup.classList.add("dragging");
+    if (!gameConfig.state.isInteractable) return;
+    touchItem = e.target.closest('.cup');
+    if (touchItem) {
+        touchItem.classList.add('dragging');
+    }
 }
 
 function handleTouchMove(e) {
-  const touch = e.touches[0];
-  const offsetX = touch.clientX - touchStartX;
-  const offsetY = touch.clientY - touchStartY;
-
-  draggedCup.style.position = "absolute";
-  draggedCup.style.left = `${touch.clientX}px`;
-  draggedCup.style.top = `${touch.clientY}px`;
-}
-
-
-function handleTouchEnd(e) {
-  const touch = e.changedTouches[0];
-  const targetCup = document.elementFromPoint(touch.clientX, touch.clientY);
-
-  if (targetCup && targetCup.classList.contains("cup")) {
-    swapCups(targetCup);
-  } else {
-    console.warn("لم يتم العثور على كأس في هذه النقطة.");
-  }
-
-  // إعادة الكأس إلى موقعه الافتراضي
-  if (draggedCup) {
-    draggedCup.style.transform = "none";
-  }
-}
-function handleTouchEnd(e) {
-  if (draggedCup) {
-    draggedCup.classList.remove("dragging");
-  }
-}
-
-
-function swapCups(targetCup) {
-  if (targetCup && targetCup.classList.contains("cup")) {
-    const draggedColor = draggedCup.dataset.color;
-    const targetColor = targetCup.dataset.color;
-
-    // تبديل الألوان بين الكؤوس
-    draggedCup.dataset.color = targetColor;
-    targetCup.dataset.color = draggedColor;
-
-    // تحديث المظهر الخارجي
-    draggedCup.style.backgroundColor = targetColor;
-    targetCup.style.backgroundColor = draggedColor;
-  }
-}
-
-function checkUserOrder() {
-  const cups = Array.from(document.querySelectorAll(".cup"));
-  const userOrder = cups.map(cup => cup.dataset.color);
-
-  if (JSON.stringify(userOrder) === JSON.stringify(originalOrder)) {
-    winCount++;
-    alert(`أحسنت! ${winCount}/3 جولات ناجحة.`);
-
-    if (winCount >= 3) {
-      alert("أحسنت! انتقلت إلى المستوى التالي!");
-      const levelsKeys = Object.keys(levels);
-      const nextLevelIndex = levelsKeys.indexOf(selectedLevel) + 1;
-
-      if (nextLevelIndex < levelsKeys.length) {
-        startGame(levelsKeys[nextLevelIndex]); // ابدأ المستوى التالي
-      } else {
-        alert("مبروك! لقد أنهيت اللعبة!");
-        resetGame();
-      }
-    } else {
-      startNewRound();
+    if (!touchItem) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetCup = elementBelow?.closest('.cup');
+    if (targetCup && targetCup !== touchItem) {
+        // تلميح بسيط
+        targetCup.style.transform = 'scale(1.1)';
     }
-  } else {
-    alert("خطأ! حاول مرة أخرى.");
-    startNewRound();
-  }
+}
+
+function handleTouchEnd(e) {
+    if (!touchItem) return;
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetCup = elementBelow?.closest('.cup');
+
+    // إعادة كل الأكواب لحجمها الطبيعي
+    document.querySelectorAll('.cup').forEach(c => c.style.transform = '');
+
+    if (targetCup && targetCup !== touchItem) {
+        swapCups(touchItem, targetCup);
+    }
+    
+    if(touchItem) {
+        touchItem.classList.remove('dragging');
+    }
+    touchItem = null;
+}
+
+function swapCups(cup1, cup2) {
+    if (cup1 === cup2) return;
+    
+    const tempColor = cup1.dataset.color;
+    cup1.dataset.color = cup2.dataset.color;
+    cup2.dataset.color = tempColor;
+
+    const cup1Body = cup1.querySelector('.cup-body');
+    const cup2Body = cup2.querySelector('.cup-body');
+    
+    cup1Body.style.backgroundColor = cup1.dataset.color;
+    cup1.style.color = cup1.dataset.color;
+    cup2Body.style.backgroundColor = cup2.dataset.color;
+    cup2.style.color = cup2.dataset.color;
+}
+
+// --- التحقق من النتيجة ---
+function checkUserOrder() {
+    disableUserInteraction();
+    const userOrder = Array.from(document.querySelectorAll(".cup")).map(cup => cup.dataset.color);
+    const isCorrect = JSON.stringify(userOrder) === JSON.stringify(gameConfig.state.originalOrder);
+
+    if (isCorrect) {
+        gameConfig.state.roundsWon++;
+        gameConfig.state.score += 10 * (gameConfig.levels[gameConfig.state.currentLevel].cups);
+        updateUI();
+        
+        document.getElementById('cups-container').classList.add('animate-success');
+        showModal('success', `أحسنت! لقد نجحت في هذه الجولة. 🎉`, () => {
+            document.getElementById('cups-container').classList.remove('animate-success');
+            if (gameConfig.state.roundsWon >= 3) {
+                levelComplete();
+            } else {
+                startNewRound();
+            }
+        });
+    } else {
+        document.getElementById('cups-container').classList.add('animate-error');
+        showModal('error', `الترتيب خاطئ! حاول مرة أخرى. 😞`, () => {
+            document.getElementById('cups-container').classList.remove('animate-error');
+            startNewRound();
+        }, true); // true تعني إظهار زر "إعادة المحاولة"
+    }
+}
+
+function levelComplete() {
+    const levelsKeys = Object.keys(gameConfig.levels);
+    const nextLevelIndex = levelsKeys.indexOf(gameConfig.state.currentLevel) + 1;
+    
+    if (nextLevelIndex < levelsKeys.length) {
+        showModal('success', `ممتاز! لقد أكملت المستوى ${gameConfig.levels[gameConfig.state.currentLevel].name} بنجاح. هل تريد الانتقال للمستوى التالي؟`, () => {
+            startGame(levelsKeys[nextLevelIndex]);
+        });
+    } else {
+        showModal('success', `مبروك! لقد أنهيت جميع المستويات بـ ${gameConfig.state.score} نقطة! أنت بطل. 🏆`, () => {
+            resetGame();
+        });
+    }
 }
 
 function startNewRound() {
-  document.getElementById("instruction").textContent = "تذكر أماكن الكؤوس!";
-  generateCups(levels[selectedLevel]); // إعادة إنشاء الأكواب بألوان عشوائية
-  setTimeout(() => {
-    document.getElementById("instruction").textContent = "الكؤوس تختلط!";
-    startMixing(); // استدعاء الخلط
-  }, 6000);
+    updateInstruction("تذكر الأكواب للجولة القادمة!");
+    generateCups(gameConfig.levels[gameConfig.state.currentLevel].cups);
+    setTimeout(() => {
+        updateInstruction("الأكواب تختلط مرة أخرى...");
+        animateMixing();
+    }, gameConfig.levels[gameConfig.state.currentLevel].memorizeTime);
 }
 
 function resetGame() {
-  document.getElementById("game-board").classList.add("hidden");
-  document.getElementById("level-selection").classList.remove("hidden");
-  document.getElementById("algorithm-selection").classList.add("hidden");
+    switchScreen('level-selection');
+    gameConfig.state.currentLevel = null;
+    gameConfig.state.score = 0;
+    gameConfig.state.roundsWon = 0;
+    updateUI();
 }
 
-  
+// --- دوال الواجهة والمساعدة ---
+function switchScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
+    document.getElementById(screenId).classList.remove('hidden');
+}
 
+function updateUI() {
+    document.getElementById('current-level').textContent = gameConfig.state.currentLevel ? gameConfig.levels[gameConfig.state.currentLevel].name : '-';
+    document.getElementById('score').textContent = gameConfig.state.score;
+}
 
+function updateInstruction(text) {
+    const instructionEl = document.getElementById("instruction");
+    instructionEl.style.opacity = '0';
+    setTimeout(() => {
+        instructionEl.textContent = text;
+        instructionEl.style.opacity = '1';
+    }, 300);
+}
 
+function showModal(type, message, onPrimaryBtnClick, showSecondary = false) {
+    const modal = document.getElementById('modal');
+    const icon = document.getElementById('modal-icon');
+    const msg = document.getElementById('modal-message');
+    const primaryBtn = document.getElementById('modal-primary-btn');
+    const secondaryBtn = document.getElementById('modal-secondary-btn');
 
+    icon.innerHTML = type === 'success' ? '<i class="fas fa-check-circle" style="color: var(--success-color);"></i>' : '<i class="fas fa-times-circle" style="color: var(--error-color);"></i>';
+    msg.textContent = message;
+    
+    primaryBtn.onclick = () => {
+        hideModal();
+        if (onPrimaryBtnClick) onPrimaryBtnClick();
+    };
 
+    if (showSecondary) {
+        secondaryBtn.classList.remove('hidden');
+    } else {
+        secondaryBtn.classList.add('hidden');
+    }
+    
+    modal.classList.add('show');
+}
 
- 
+function hideModal() {
+    const modal = document.getElementById('modal');
+    modal.classList.remove('show');
+}
 
-
-  
-
-
-
-
-
-
- 
-
-
-
+function handleModalAction() {
+    // هذه الدالة مرتبطة بزر "موافق" الأساسي
+    // المنطق الفعلي يتم تمريره عبر showModal
+}
